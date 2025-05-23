@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv() 
 
-pc = pinecone.Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
+pc = pinecone.Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 index = pc.Index("wondere")
 
 def query_similar_messages(input_text):

@@ -92,4 +92,4 @@ async def handle_conversation(message):
     update_context(message.channel.id, "bot", reply)
     await message.channel.send(reply)
 
-bot.run(os.environ.get("DISCORD_BOT_TOKEN"))
+bot.run(os.getenv("DISCORD_BOT_TOKEN"))
