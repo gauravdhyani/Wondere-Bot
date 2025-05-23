@@ -1,0 +1,6 @@
+pinecone-client
+python-dotenv
+tinydb
+requests
+groq
+discord.py
