@@ -1,5 +1,6 @@
 import discord
 import os
+import random
 import asyncio
 from discord.ext import commands
 from discord import app_commands
@@ -15,9 +16,7 @@ intents.messages = True
 intents.message_content = True      
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-TARGET_CHANNEL_ID = 1193038947174072362 
-TARGET_CHANNEL_ID2 = 505367378528305153
-TARGET_CHANNEL_ID3 = 1193038947174072362 
+
 MODEL_NAME = "llama-text-embed-v2"
 
 @bot.event
@@ -26,14 +25,23 @@ async def on_ready():
     await bot.tree.sync()  
     bot.loop.create_task(cleanup_loop())  
 
+ACTIVE_CHANNELS = [1193038947174072362, 505367378528305153]
+RESPONSE_CHANCE = 0.15  # 5% chance per message to randomly reply
 
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
-    
-    if bot.user.mentioned_in(message) or message.channel.id == TARGET_CHANNEL_ID or message.channel.id == TARGET_CHANNEL_ID2 or message.channel.id == TARGET_CHANNEL_ID3:
-        await handle_conversation(message)
+
+    # Check if it's a target channel
+    if message.channel.id in ACTIVE_CHANNELS:
+        # Respond if mentioned or roll for random response
+        if bot.user.mentioned_in(message):
+            await handle_conversation(message)
+        elif random.random() < RESPONSE_CHANCE:
+            await handle_conversation(message)
+
+    await bot.process_commands(message)
 
 
 @app_commands.command(name="ping", description="Check if bot is online")
