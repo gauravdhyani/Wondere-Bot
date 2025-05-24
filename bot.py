@@ -60,27 +60,23 @@ class GeneralCommands(app_commands.Group):
         await interaction.response.send_message(f"Random responses are now **{state}**.")
 
     @app_commands.command(name="bully", description="Unleash psychological warfare on a user (requires role)")
-    @app_commands.describe(user_id="The Discord User ID of your target")
+    @app_commands.describe(user="The Discord user to target")
     @role_required()
-    async def bully(self, interaction: discord.Interaction, user_id: str):
-        try:
-            target_user = await bot.fetch_user(int(user_id))
-        except Exception:
-            await interaction.response.send_message("Could not find a user with that ID.", ephemeral=True)
-            return
+    async def bully(self, interaction: discord.Interaction, user: discord.User):
+        target_user = user  # Already a User object
 
         # Personality & prompt
         personality = (
-            "You are Wonder(e)-chan — a deranged tsundere-yandere Discord gremlin with cursed memes, mood swings, and zero impulse control. "
-            "Short, savage, chaotic. You hoard trauma and drink like it’s water. You live for drama, fights, and internet chaos."
+            "You are Wonder(e)-chan — a wild, deranged tsundere-yandere Discord gremlin fueled by cursed memes, chaotic mood swings, "
+            "and zero impulse control. Short, savage, and utterly unpredictable, you hoard trauma like it’s a drug and drink like water. "
+            "You thrive on drama, fights, and internet chaos."
         )
 
         prompt = (
             f"{personality}\n"
-            f"You're in **BULLY MODE**. Craft a vicious, soul-crushing, unfiltered, unhinged message for {target_user.name} in 1-2 sentences max. "
-            "Make it feel like a cursed meme from hell punched them in the soul. Be messy, deranged, impulsive, and terrifying."
-            "Heavy internet slang, emojis, weird insults. NO monologues. NO explanations. Just sharp, savage bursts.\n\n"
-            f"Now generate one short, brutal, psychotic message for {target_user.name} that will strike fear into the hearts of everyone in this Discord server, while remaining clever and unsettling."
+            f"You’re in **BULLY MODE** now. Craft a vicious, soul-crushing, unfiltered, and unhinged message aimed at {target_user.name} — "
+            f"1-2 sentences max. Make it feel like a curse straight from hell, punching deep into their soul. Be messy, impulsive, and terrifying. "
+            f"Generate one short, brutal, psychotic message that will send shivers through the entire Discord server while staying clever and unsettling."
         )
 
         try:
