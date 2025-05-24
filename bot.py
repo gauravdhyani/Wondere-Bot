@@ -1,6 +1,7 @@
 import discord
 import os
 import random
+import re
 import asyncio
 from discord.ext import commands
 from discord import app_commands
@@ -95,6 +96,7 @@ async def on_ready():
     print("Slash commands synced.")
     bot.loop.create_task(cleanup_loop())
 
+
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -104,8 +106,15 @@ async def on_message(message):
         if not GeneralCommands.bot_active:
             return
 
+        # If bot is pinged directly
         if bot.user.mentioned_in(message):
             await handle_conversation(message)
+
+        # If 'wonder' mentioned anywhere in any case (regex match)
+        elif re.search(r"w[o0]nd(e|er)?", message.content, re.IGNORECASE):
+            await handle_conversation(message)
+
+        # Random chance to reply
         elif random.random() < RESPONSE_CHANCE:
             await handle_conversation(message)
 
