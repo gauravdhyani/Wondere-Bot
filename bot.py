@@ -195,6 +195,6 @@ async def handle_conversation(message):
         print(f"[Groq API Error]: {e}")
 
     update_context(message.channel.id, "bot", reply)
-    await message.channel.send(reply)
+    await message.reply(reply)
 
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
