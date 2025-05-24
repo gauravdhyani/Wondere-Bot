@@ -112,11 +112,9 @@ class GeneralCommands(app_commands.Group):
 @bot.event
 async def on_ready():
     print(f"{bot.user} is online!")
+    bot.tree.add_command(GeneralCommands(name="general"))
     await bot.tree.sync()
-
-    # Register command group cleanly
-    await bot.tree.add_command(GeneralCommands(name="general"))
-
+    print("Slash commands synced.")
     bot.loop.create_task(cleanup_loop())
 
 @bot.event
