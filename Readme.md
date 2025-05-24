@@ -179,9 +179,6 @@ Create a real-time interactive bot that responds to users using memory, semantic
 
 ---
 
-## Flowchart
-![Final Project Pipeline Flowchart](flowchart.png)
-
 ---
 
 ## Detailed Function Analysis
