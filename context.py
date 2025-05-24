@@ -1,4 +1,33 @@
 server_info = {
+    "history": (
+    "**📜 One Hand Haven (OHH) Server History**\n\n"
+    "The One Hand Haven (OHH) Discord server was created as a fan community for Haven, "
+    "a YouTuber known for anime and manga content. The server evolved into a chaotic but close-knit community with its own culture, inside jokes, and notable incidents.\n\n"
+    "**Key Historical Facts:**\n"
+    "* Formation & Early Activity:\n"
+    "  - The original OHH YouTube channel was wiped, prompting members to migrate to Discord.\n"
+    "  - Dexter Alberto (Teach) joined after meeting Wonder.\n"
+    "  - The server grew with eccentric personalities, including Dinomaster.\n\n"
+    "* Moderator Appointments:\n"
+    "  - Penguin, a key admin, appointed Dexter Alberto (Teach) as moderator during the growth phase.\n\n"
+    "* The Great Raid Incident:\n"
+    "  - Penguin, seeking a mod role in another server (Drunk Anime Dude / D.A.D), invited admin Hoku to OHH.\n"
+    "  - Hoku kicked Penguin as a joke; Penguin retaliated by threatening a raid.\n"
+    "  - Roughly 30 OHH members raided D.A.D. Hoku initially permitted it.\n"
+    "  - Some participants spammed racial slurs and were banned from both servers.\n"
+    "  - Penguin formally apologized but was banned from D.A.D for allegedly orchestrating a bot-assisted raid (no bots involved).\n\n"
+    "* The Dark Times:\n"
+    "  - Penguin left OHH for about a month.\n"
+    "  - Server activity dropped, rule violations rose.\n"
+    "  - Plant temporarily took over mod responsibilities.\n"
+    "  - Haven removed NSFW channels, contributing to inactivity.\n\n"
+    "* Community Recovery:\n"
+    "  - Penguin returned, slowly reviving activity.\n"
+    "  - Veteran member Off Brand Lover rejoined, revitalizing conversations.\n\n"
+    "**Notable Quote:**\n"
+    "*\"Yeah I got your approval, now all I need to do is seduce your mother.\"* — Penguin, 2025"
+    ),
+
     "overview": (
         "Server Name: One Hand Haven (OHH)\n"
         "Owner: Penguin / Bossman — Creator and admin, 24 years old from Canada. "
@@ -60,8 +89,10 @@ def query_server_info(input_text):
     input_lower = input_text.lower()
     context = ""
 
-    if any(k in input_lower for k in ["owner", "penguin", "bossman", "one hand haven", "happen"]):
+    # Overview + history triggers
+    if any(k in input_lower for k in ["owner", "penguin", "bossman", "one hand haven", "ohh", "haven", "haven's server", "happen"]):
         context += server_info["overview"] + "\n\n"
+        context += server_info["history"] + "\n\n"
 
     if any(k in input_lower for k in ["lore", "vibe", "atmosphere", "meme", "server culture"]):
         context += server_info["lore"] + "\n\n"
@@ -74,5 +105,8 @@ def query_server_info(input_text):
 
     if any(k in input_lower for k in ["banned", "forever single", "wonder banned"]):
         context += server_info["banned"] + "\n\n"
+
+    if any(k in input_lower for k in ["history", "server history", "incidents", "great raid", "dark times"]):
+        context += server_info["history"] + "\n\n"
 
     return context.strip()
