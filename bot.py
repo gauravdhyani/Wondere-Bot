@@ -86,7 +86,7 @@ class GeneralCommands(app_commands.Group):
             reply = "(Failed to generate a sufficiently cruel reply.)"
             print(f"[Groq API Error]: {e}")
 
-        await interaction.response.send_message(reply)
+        await interaction.response.send_message(f"{target_user.mention} {reply}")
 
 @bot.event
 async def on_ready():
