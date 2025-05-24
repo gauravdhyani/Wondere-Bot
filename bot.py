@@ -35,7 +35,7 @@ def role_required():
 # Slash command group
 class GeneralCommands(app_commands.Group):
     bot_active = True
-    allowed_role_id = 1375892339477970954
+    allowed_role_id = 1327497015558410312
 
     @app_commands.command(name="ping", description="Check if bot is online")
     @role_required()
