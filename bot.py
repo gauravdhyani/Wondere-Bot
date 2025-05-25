@@ -141,8 +141,6 @@ async def handle_conversation(message):
     user_id = str(message.author.id)
     channel_id = str(message.channel.id)
 
-    update_context(channel_id, "user", message.content)
-
     facts = extract_facts(message.content)
     for fact in facts:
         add_user_fact(user_id, fact)
@@ -272,4 +270,8 @@ async def handle_conversation(message):
     await message.reply(reply)
 
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
+
+
+
+
 
