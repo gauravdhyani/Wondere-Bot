@@ -51,7 +51,10 @@ class GeneralCommands(app_commands.Group):
         if not history:
             await interaction.response.send_message("No conversation history yet.")
         else:
-            text = "\n".join(f"{msg.get('role', 'unknown')}: {msg.get('content', '')}" for msg in history)
+            text = "\n".join(
+                f"{msg.get('role', 'unknown')} ({msg.get('username', 'anonymous')}): {msg.get('content', '')}"
+                for msg in history
+            )
             await interaction.response.send_message(f"**Conversation History:**\n{text[:1800]}")
 
 
@@ -113,22 +116,24 @@ async def on_message(message):
 
         username = getattr(message.author, "display_name", message.author.name)
 
-        # If bot is pinged directly
+        # Log the user's message once if any trigger matches
+        triggered = False
+
         if bot.user.mentioned_in(message):
-            update_context(str(message.channel.id), "user", message.content, username=username)
-            await handle_conversation(message)
+            triggered = True
 
-        # If 'wonder' mentioned anywhere in any case (regex match)
         elif re.search(r"w[o0]nd(e|er)?", message.content, re.IGNORECASE):
-            update_context(str(message.channel.id), "user", message.content, username=username)
-            await handle_conversation(message)
+            triggered = True
 
-        # Random chance to reply
         elif random.random() < RESPONSE_CHANCE:
+            triggered = True
+
+        if triggered:
             update_context(str(message.channel.id), "user", message.content, username=username)
             await handle_conversation(message)
 
     await bot.process_commands(message)
+
 
 
 
@@ -263,7 +268,7 @@ async def handle_conversation(message):
         reply = "(error generating reply)"
         print(f"[Groq API Error]: {e}")
 
-    update_context(channel_id, "bot", reply)
+    update_context(str(message.channel.id), "bot", reply)
     await message.reply(reply)
 
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
