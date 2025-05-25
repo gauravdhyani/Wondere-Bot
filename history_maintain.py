@@ -64,16 +64,90 @@ def get_user_facts(user_id):
     record = db_memory.get(UserMemory.user_id == user_id)
     return record["facts"] if record else []
 
+import re
+
 def extract_facts(message):
     facts = []
     patterns = [
-        r"my favorite (\w+) is (\w+)",
-        r"i (love|like|hate) (.+)",
-        r"i live in (.+)"
+        # Personal info
+        r"my name is (.+)",
+        r"i am (\d+) years? old",
+        r"i was born in (.+)",
+        r"my birthday is (.+)",
+        r"i am from (.+)",
+        r"i live in (.+)",
+        r"i currently reside in (.+)",
+        r"i moved to (.+)",
+        
+        # Work and education
+        r"i work as a[n]? (.+)",
+        r"i am a[n]? (.+)",
+        r"i study (.+)",
+        r"i go to (.+)",
+        r"i graduated from (.+)",
+        
+        # Preferences & hobbies
+        r"my favorite (\w+) is (.+)",
+        r"i (love|like|enjoy|hate) (.+)",
+        r"i like to (.+)",
+        r"my (?:hobby|hobbies) (?:are|is) (.+)",
+        r"i spend my free time (.+)",
+        r"i prefer (.+)",
+        
+        # Family and pets
+        r"i have (\d+) (brothers|sisters|siblings|children|pets)",
+        r"i have a (son|daughter|brother|sister|dog|cat) named (.+)",
+        r"my pet's name is (.+)",
+        
+        # Skills & languages
+        r"i speak (.+)",
+        r"i can (.+)",
+        r"i know how to (.+)",
+        r"i play (.+)",
+        
+        # Travel & locations
+        r"i have been to (.+)",
+        r"i want to visit (.+)",
+        r"i travel to (.+) often",
+        
+        # Food and drink
+        r"my favorite food is (.+)",
+        r"my favorite drink is (.+)",
+        r"i like to eat (.+)",
+        r"i don't like (.+)",
+        
+        # Relationships
+        r"i am (single|married|divorced|engaged|in a relationship)",
+        r"my partner's name is (.+)",
+        
+        # Media & entertainment
+        r"my favorite movie is (.+)",
+        r"my favorite song is (.+)",
+        r"my favorite book is (.+)",
+        r"i watch (.+)",
+        r"i listen to (.+)",
+        
+        # Sports & fitness
+        r"i play (.+)",
+        r"i support (.+)",
+        r"i exercise by (.+)",
+        
+        # Technology & gaming
+        r"i use (.+)",
+        r"i play the game (.+)",
+        
+        # Miscellaneous
+        r"i have a (.+)",
+        r"i believe in (.+)",
+        r"i fear (.+)",
+        r"i dream of (.+)"
     ]
+
     for pattern in patterns:
         match = re.search(pattern, message, re.IGNORECASE)
         if match:
             fact = " ".join(match.groups())
             facts.append(fact)
+    
     return facts
+

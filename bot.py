@@ -110,7 +110,7 @@ async def on_message(message):
         if not GeneralCommands.bot_active:
             return
 
-        username = message.author.display_name  # Get display name
+        username = getattr(message.author, "display_name", message.author.name)
 
         # If bot is pinged directly
         if bot.user.mentioned_in(message):
@@ -128,6 +128,7 @@ async def on_message(message):
             await handle_conversation(message)
 
     await bot.process_commands(message)
+
 
 
 async def handle_conversation(message):
@@ -220,6 +221,8 @@ async def handle_conversation(message):
         "* Comes off as a normie-leaning chaotic internet kid surviving IRL trashfires.\n"
     )
 
+    username = getattr(message.author, "display_name", message.author.name)
+
     server_context = query_server_info(message.content)
 
     prompt = f"{personality}\n\n{writing_style}\n\n{chip_status_text}\n\n"
@@ -233,8 +236,8 @@ async def handle_conversation(message):
         for fact in user_facts:
             prompt += f"- {fact}\n"
 
-    # Add the user display name in context
-    prompt += f"\nTarget User: {message.author.display_name}\n"
+    # Add the user display name (or fallback username)
+    prompt += f"\nTarget User: {username}\n"
     prompt += f"User says: {message.content}\nWonder(e)-chan responds:"
 
     prompt += (
@@ -247,7 +250,7 @@ async def handle_conversation(message):
     history = get_context(channel_id)
     prompt += "\n\nRecent conversation history (last 10 messages):\n"
     for entry in history[-10:]:
-        prompt += f"{entry['role']}: {entry['content']}\n"
+        prompt += f"{entry.get('role', 'unknown')}: {entry.get('content', '')}\n"
 
     prompt += "\nSimilar messages from past conversations for inspiration:\n"
     for msg in similar_msgs:
@@ -261,7 +264,6 @@ async def handle_conversation(message):
 
     update_context(channel_id, "bot", reply)
     await message.reply(reply)
-
 
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
 
