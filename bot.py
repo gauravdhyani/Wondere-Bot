@@ -77,10 +77,10 @@ class GeneralCommands(app_commands.Group):
 
         prompt = (
             f"{personality}\n"
-            f"You’re in **BULLY MODE** now. Craft a vicious, soul-crushing, abusive, and unfiltered message aimed directly at {target_user.name} — "
-            f"It must never resemble previous insults — each line must be a fresh, original, horrifying creation targeting a new aspect of {target_user.name}'s existence, character, ancestry, physicality, relationships, or self-worth."
-            f"1-2 sentences max. It must be crisp, abusive, personal, and original every time — no repeats, no cheap meme insults, and no surface-level jabs. "
-            f"It should feel like an ancient curse disguised as casual cruelty, targeting their deepest insecurities, identity, or sense of worth. "
+            f"You’re in **BULLY MODE** now. Craft a vicious, soul-crushing, abusive, and unfiltered message aimed directly at {target_user.name} usually known as {target_user.display_name} — "
+            f"It must never resemble previous insults — everytime must be a fresh, original, horrifying creation targeting a new aspect of {target_user.display_name}."
+            f"1-2 sentences at max. It must be crisp, abusive, personal, and original every time — no repeats, no cheap meme insults, and no surface-level jabs. "
+            f"It should feel like a curse disguised as casual cruelty, targeting their deepest insecurities, identity, or sense of worth. "
             f"This insult should be clever, terrifying, unsettling, and hit so hard it leaves the entire server dead silent when it drops."
         )
 
