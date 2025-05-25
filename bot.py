@@ -47,12 +47,13 @@ class GeneralCommands(app_commands.Group):
     @app_commands.command(name="convo_history", description="Show current conversation history for this channel")
     @role_required()
     async def convo_history(self, interaction: discord.Interaction):
-        history = get_context(interaction.channel_id)
+        history = get_context(str(interaction.channel.id))
         if not history:
             await interaction.response.send_message("No conversation history yet.")
         else:
-            text = "\n".join(f"{msg['role']}: {msg['content']}" for msg in history)
+            text = "\n".join(f"{msg.get('role', 'unknown')}: {msg.get('content', '')}" for msg in history)
             await interaction.response.send_message(f"**Conversation History:**\n{text[:1800]}")
+
 
     @app_commands.command(name="toggle_responses", description="Turn random bot responses on or off (requires role)")
     @role_required()
