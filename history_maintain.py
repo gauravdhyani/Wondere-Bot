@@ -10,19 +10,27 @@ db_memory = TinyDB("user_memory.json")
 Conversation = Query()
 UserMemory = Query()
 
-def update_context(channel_id, role, content, max_messages=20):
+def update_context(channel_id, role, content, username=None, max_messages=20):
     now = time.time()
     data = db_convo.get(Conversation.channel_id == channel_id)
+    entry = {
+        "role": role,
+        "content": content,
+        "timestamp": now,
+    }
+    if username:
+        entry["username"] = username
+
     if data:
         history = data['history']
-        history.append({"role": role, "content": content, "timestamp": now})
+        history.append(entry)
         if len(history) > max_messages:
             history.pop(0)
         db_convo.update({"history": history, "last_active": now}, Conversation.channel_id == channel_id)
     else:
         db_convo.insert({
             "channel_id": channel_id,
-            "history": [{"role": role, "content": content, "timestamp": now}],
+            "history": [entry],
             "last_active": now
         })
 

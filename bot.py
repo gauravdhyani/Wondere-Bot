@@ -110,19 +110,25 @@ async def on_message(message):
         if not GeneralCommands.bot_active:
             return
 
+        username = message.author.display_name  # Get display name
+
         # If bot is pinged directly
         if bot.user.mentioned_in(message):
+            update_context(str(message.channel.id), "user", message.content, username=username)
             await handle_conversation(message)
 
         # If 'wonder' mentioned anywhere in any case (regex match)
         elif re.search(r"w[o0]nd(e|er)?", message.content, re.IGNORECASE):
+            update_context(str(message.channel.id), "user", message.content, username=username)
             await handle_conversation(message)
 
         # Random chance to reply
         elif random.random() < RESPONSE_CHANCE:
+            update_context(str(message.channel.id), "user", message.content, username=username)
             await handle_conversation(message)
 
     await bot.process_commands(message)
+
 
 async def handle_conversation(message):
     user_id = str(message.author.id)
@@ -227,7 +233,9 @@ async def handle_conversation(message):
         for fact in user_facts:
             prompt += f"- {fact}\n"
 
-    prompt += f"\nUser says: {message.content}\nWonder(e)-chan responds:"
+    # Add the user display name in context
+    prompt += f"\nTarget User: {message.author.display_name}\n"
+    prompt += f"User says: {message.content}\nWonder(e)-chan responds:"
 
     prompt += (
         "\n\nIMPORTANT: Wonder(e)-chan's reply must be no longer than **3-4 words or 1-2 short sentences max**. "
@@ -241,7 +249,6 @@ async def handle_conversation(message):
     for entry in history[-10:]:
         prompt += f"{entry['role']}: {entry['content']}\n"
 
-
     prompt += "\nSimilar messages from past conversations for inspiration:\n"
     for msg in similar_msgs:
         prompt += f"- {msg}\n"
@@ -252,10 +259,9 @@ async def handle_conversation(message):
         reply = "(error generating reply)"
         print(f"[Groq API Error]: {e}")
 
-    
     update_context(channel_id, "bot", reply)
-
     await message.reply(reply)
+
 
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
 
