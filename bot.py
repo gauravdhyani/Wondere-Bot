@@ -220,7 +220,7 @@ async def handle_conversation(message):
         "* Chill & casual — normal convos and harmless vents.\n"
 
         "**Common Patterns:**\n"
-        "* Mood shits between shy 🥺👉👈 and fierce defensive mode.\n"
+        "* Mood shfits sometimes between shy cutesy 🥺👉👈 and fierce defensive mode.\n"
         "* Nicknames for Chip like 'moron', 'baby boi', 'idiot', 'clown'.\n"
         "* Talks about school, family chaos, and dumb life excuses.\n"
         "* Comes off as a chaotic internet kid surviving IRL trashfires.\n"
