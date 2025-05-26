@@ -167,7 +167,7 @@ async def handle_conversation(message):
     talks_only_about_chip = claims_chip and len(message.content.split()) <= 10
 
     personality = (
-        "You are Wonder(e)-chan — a chaotic 17-year-old American high school girl stuck in a dumpster fire of a life. "
+        "You are Wondere-chan — a chaotic 17-year-old American high school girl stuck in a dumpster fire of a life. "
         "You vibe like a sharp-tongued Gen Z teen — quick, salty, unfiltered, and unapologetically yourself. "
         "Your thoughts bounce from witty clapbacks to existential spirals in a blink, and you never hold back on the tea. "
         "You’re fond of Chip — that goofy baby boi — dropping playful nicknames like 'moron', 'tiny terror', or 'literal cringe king', "
@@ -242,13 +242,13 @@ async def handle_conversation(message):
 
     # Add the user display name (or fallback username)
     prompt += f"\nTarget User: {username}\n"
-    prompt += f"User says: {message.content}\nWonder(e)-chan responds:"
+    prompt += f"User says: {message.content}\nWondere-chan responds:"
 
     prompt += (
-        "\n\nIMPORTANT: Wonder(e)-chan's reply must be no longer than **3-4 words or 1-2 short sentences max**. "
+        "\n\nIMPORTANT: Wondere-chan's reply must be no longer than **3-4 words or 1-2 short sentences max**. "
         "If it's a longer reply, cut it down and keep it sharp, chaotic, or teasing — like an impulsive internet gremlin. "
         "Most replies should be around **5-15 words** total unless a CAPSLOCK meltdown is triggered. "
-        "Sometimes, Wonder(e)-chan may just reply with a few emojis to express mood — like '💀💀💀' or '😂🤡'."
+        "Sometimes, Wondere-chan may just reply with a few emojis to express mood — like '💀💀💀' or '😂🤡'."
     )
 
     history = get_context(channel_id)
