@@ -5,12 +5,18 @@ import re
 import asyncio
 from discord.ext import commands
 from discord import app_commands
-from history_maintain import update_context, get_context, cleanup_loop, add_user_fact, extract_facts, get_user_facts
 from pinecone_fetch import query_similar_messages
 from groq_fetch import generate_reply
 from context import query_server_info
 from dotenv import load_dotenv
-
+from history_maintain import (
+    update_channel_context,
+    update_user_context,
+    get_channel_context,
+    get_user_context,
+    remove_old_contexts,
+    cleanup_loop,
+)
 load_dotenv()
 intents = discord.Intents.default()
 intents.guilds = True
@@ -47,7 +53,7 @@ class GeneralCommands(app_commands.Group):
     @app_commands.command(name="convo_history", description="Show current conversation history for this channel")
     @role_required()
     async def convo_history(self, interaction: discord.Interaction):
-        history = get_context(str(interaction.channel.id))
+        history = get_channel_context(str(interaction.channel.id)) 
         if not history:
             await interaction.response.send_message("No conversation history yet.")
         else:
@@ -56,6 +62,7 @@ class GeneralCommands(app_commands.Group):
                 for msg in history
             )
             await interaction.response.send_message(f"**Conversation History:**\n{text[:1800]}")
+
 
 
     @app_commands.command(name="toggle_responses", description="Turn random bot responses on or off (requires role)")
@@ -128,22 +135,14 @@ async def on_message(message):
             triggered = True
 
         if triggered:
-            update_context(str(message.channel.id), "user", message.content, username=username)
+            update_channel_context(str(message.channel.id), "user", message.content, username=username)  # <-- Corrected here
             await handle_conversation(message)
 
     await bot.process_commands(message)
 
-
-
-
-
 async def handle_conversation(message):
     user_id = str(message.author.id)
     channel_id = str(message.channel.id)
-
-    facts = extract_facts(message.content)
-    for fact in facts:
-        add_user_fact(user_id, fact)
 
     try:
         similar_msgs = query_similar_messages(message.content)
@@ -151,7 +150,6 @@ async def handle_conversation(message):
         similar_msgs = ["(error retrieving similar messages)"]
         print(f"Pinecone error: {e}")
 
- 
     chip_user_id = "1336898059170218117"
 
     claims_chip = "chip" in message.content.lower()
@@ -163,7 +161,6 @@ async def handle_conversation(message):
         else:
             chip_status_text = "\n\nNote: This user CLAIMS to be Chip but is a FAKE impostor."
 
-    
     talks_only_about_chip = claims_chip and len(message.content.split()) <= 10
 
     personality = (
@@ -227,40 +224,39 @@ async def handle_conversation(message):
         "* Talks about school, family chaos, and dumb life excuses.\n"
         "* Comes off as a chaotic internet kid surviving IRL trashfires.\n"
     )
-
-    username = getattr(message.author, "display_name", message.author.name)
+   
+    channel_history = get_channel_context(channel_id)
+    user_history = get_user_context(user_id)
 
     server_context = query_server_info(message.content)
 
-    prompt = f"{personality}\n\n{writing_style}\n\n{chip_status_text}\n\n"
+    prompt = f"{personality}\n\n{writing_style}\n\n"
+    prompt += chip_status_text + "\n\n"
 
     if server_context:
         prompt += f"Additional server info:\n{server_context}\n\n"
 
-    user_facts = get_user_facts(user_id)
-    if user_facts:
-        prompt += "\nFacts about this user:\n"
-        for fact in user_facts:
-            prompt += f"- {fact}\n"
+    if user_history:
+        prompt += "Recent history with this user (last 10 messages):\n"
+        for entry in user_history[-10:]:
+            prompt += f"- {entry.get('content')}\n"
 
-    # Add the user display name (or fallback username)
-    prompt += f"\nTarget User: {username}\n"
-    prompt += f"User says: {message.content}\nWondere-chan responds:"
-
-    prompt += (
-        "\n\nIMPORTANT: Wondere-chan's reply must be no longer than **3-4 words or 1-2 short sentences max** usually and normally Ofcourse there can be exception sometimes." 
-        "If it's a longer reply, cut is short."
-        "Sometimes, Wondere-chan may just reply with a few emojis to express mood — like '💀🥺👉👈😂🔪🤡'."
-    )
-
-    history = get_context(channel_id)
-    prompt += "\n\nRecent conversation history (last 10 messages):\n"
-    for entry in history[-10:]:
+    prompt += "\nRecent conversation history in channel (last 10 messages):\n"
+    for entry in channel_history[-10:]:
         prompt += f"{entry.get('role', 'unknown')}: {entry.get('content', '')}\n"
 
     prompt += "\nSimilar messages from past conversations for inspiration:\n"
     for msg in similar_msgs:
         prompt += f"- {msg}\n"
+
+    prompt += (
+        "\n\nIMPORTANT: Wondere-chan's reply must be no longer than **3-4 words or 1-2 short sentences max** usually and normally Ofcourse there can be exception sometimes."
+        "If it's a longer reply, cut is short."
+        "Sometimes, Wondere-chan may just reply with a few emojis to express mood — like '💀🥺👉👈😂🔪🤡'."
+    )
+
+    username = getattr(message.author, "display_name", message.author.name)
+    prompt += f"\nTarget User: {username}\nUser says: {message.content}\nWondere-chan responds:"
 
     try:
         reply = await generate_reply(prompt)
@@ -268,12 +264,10 @@ async def handle_conversation(message):
         reply = "(error generating reply)"
         print(f"[Groq API Error]: {e}")
 
-    update_context(str(message.channel.id), "bot", reply)
+    update_channel_context(channel_id, "bot", reply)
     await message.reply(reply)
 
+
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
-
-
-
 
 
