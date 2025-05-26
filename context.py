@@ -90,9 +90,73 @@ def query_server_info(input_text):
     context = ""
 
     # Overview + history triggers
-    if any(k in input_lower for k in ["owner", "penguin", "bossman", "one hand haven", "ohh", "haven", "haven's server", "happen"]):
+    tokens = [
+        "owner",
+        "penguin",
+        "bossman",
+        "one hand haven",
+        "ohh",
+        "haven",
+        "haven's server",
+        "happen",
+        "moderator",
+        "mod",
+        "dexter",
+        "teach",
+        "wonder",
+        "dinomaster",
+        "raid",
+        "raid incident",
+        "great raid",
+        "drunk anime dude",
+        "d.a.d",
+        "hoku",
+        "kick",
+        "kicked",
+        "apology",
+        "banned",
+        "bot-assisted raid",
+        "bots",
+        "racial slurs",
+        "spam",
+        "dark times",
+        "plant",
+        "nsfw",
+        "nsfw channels",
+        "inactivity",
+        "community recovery",
+        "recovery",
+        "veteran",
+        "off brand lover",
+        "conversations",
+        "notable quote",
+        "2025",
+        "server activity",
+        "server growth",
+        "fan community",
+        "anime",
+        "manga",
+        "culture",
+        "inside jokes",
+        "incidents",
+        "chaos",
+        "close-knit community",
+        "original channel wiped",
+        "youtube channel wiped",
+        "members migrated",
+        "mod role",
+        "invited",
+        "temporarily took over",
+        "removed nsfw",
+        "server drop",
+        "rule violations",
+        "revived activity",
+    ]
+
+    if any(k in input_lower for k in tokens):
         context += server_info["overview"] + "\n\n"
         context += server_info["history"] + "\n\n"
+
 
     if any(k in input_lower for k in ["lore", "vibe", "atmosphere", "meme", "server culture"]):
         context += server_info["lore"] + "\n\n"
