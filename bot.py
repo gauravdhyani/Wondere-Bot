@@ -110,9 +110,6 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    if message.author.id == 918341666115575859:
-        await message.channel.send(f"<@{message.author.id}> Eat Shit:poop:!")
-
     if message.channel.id in ACTIVE_CHANNELS:
         if not GeneralCommands.bot_active:
             return
