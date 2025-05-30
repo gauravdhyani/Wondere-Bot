@@ -1,5 +1,5 @@
 ## Overview
-This project is designed to create an intelligent Discord bot that collects messages from specific users, processes and analyzes these messages, and responds in real-time using AI. The system is divided into six parts, each with specific responsibilities and functionalities.
+This project is a comprehensive Discord bot system designed to collect, process, and analyze messages from specific users in Discord servers. The bot uses advanced AI models to generate context-aware, personality-driven responses. The system is divided into several parts, each responsible for a specific aspect of the overall functionality.
 
 ---
 
@@ -15,17 +15,17 @@ Collect messages from specific users in specific Discord servers and save them t
   - `target_guild_ids`: List of server IDs to scan
 
 ### Core Function: `on_ready()`
-- **Triggered when the bot logs in.**
-  - Iterates through all guilds and channels.
-  - Skips channels without `read_message_history` permission.
-  - Fetches messages in batches of 100 using pagination.
-  - Filters messages by `target_user_ids`.
-  - Cleans message content (removes newlines, unescapes HTML).
-  - Writes to `user_messages.csv` with columns:
-    - Guild, Channel, Author, Timestamp, Content
+- Triggered when the bot logs in.
+- Iterates through all guilds and channels.
+- Skips channels without `read_message_history` permission.
+- Fetches messages in batches of 100 using pagination.
+- Filters messages by `target_user_ids`.
+- Cleans message content (removes newlines, unescapes HTML).
+- Writes to `user_messages.csv` with columns:
+  - Guild, Channel, Author, Timestamp, Content
 
 ### Error Handling
-- **Catches exceptions per channel to avoid crashing the bot.**
+- Catches exceptions per channel to avoid crashing the bot.
 
 ---
 
@@ -72,16 +72,12 @@ Analyze the writing style, tone, and personality of the user based on their mess
 ### Functions
 - **`load_messages_from_csv()`**
   - Loads messages from the CSV file.
-
 - **`chunk_list(lst, n)`**
   - Splits the message list into chunks of size `n`.
-
 - **`summarize_chunk(chunk_messages)`**
   - Sends a prompt to Groq to analyze writing style, tone, emoji usage, and common phrases.
-
 - **`aggregate_summaries(summaries)`**
   - Combines all chunk summaries into a final personality profile.
-
 - **`main(messages)`**
   - Orchestrates the entire process.
 
@@ -115,56 +111,227 @@ Extract and list all unique emojis used in the messages.
 
 ---
 
-## Part 5: Interactive Discord Bot
+## Part 5: Interactive Discord Bot (Updated)
 
 ### Purpose
-Create a real-time interactive bot that responds to users using memory, semantic similarity, and a custom personality.
+This module powers a real-time Discord bot that responds to users using contextual memory, semantic similarity, and a custom personality. It now includes **channel- and user-specific memory**, **server context awareness**, and **dynamic prompt construction**.
 
-### Key Components
-- **Libraries Used:** `discord`, `commands`, `app_commands`, `re`, `random`, `asyncio`
-- **Triggers:**
-  - Direct mention of the bot
+### Key Enhancements
+- **Modular Imports**:
+  - `query_similar_messages` from `pinecone_fetch`
+  - `generate_reply` from `groq_fetch`
+  - `query_server_info` from `context`
+  - Context management functions from `history_maintain`
+- **Improved Context Handling**:
+  - Separate memory for **channels** and **users**
+  - Dynamic prompt building using:
+    - Channel history
+    - User history
+    - Server context
+    - Semantic similarity
+- **New Constants**:
+  - `ACTIVE_CHANNELS`: List of channel IDs where the bot is active
+  - `RESPONSE_CHANCE`: Probability of random reply (7%)
+
+### Slash Commands (`GeneralCommands`)
+- **`/ping`**: Checks if the bot is online.
+- **`/convo_history`**: Displays the last 10 messages from the current channel. Uses `get_channel_context(channel_id)`.
+- **`/toggle_responses`**: Toggles random response behavior. Controlled by `GeneralCommands.bot_active`.
+- **`/bully`**: Generates a chaotic insult for a target user. Uses `generate_reply(prompt)` with a custom personality prompt (currently placeholder).
+
+### Event: `on_ready()`
+- Logs bot status.
+- Registers and syncs slash commands.
+- Starts the `cleanup_loop()` for memory management.
+
+### Event: `on_message(message)`
+- Triggers only in `ACTIVE_CHANNELS`.
+- Responds if:
+  - Bot is mentioned
   - Regex match for “wonder”
-  - Random chance (7%)
+  - Random chance
+- Updates channel context with:
+  - Role: `"user"`
+  - Content: `message.content`
+  - Username: `message.author.display_name`
+- Calls `handle_conversation(message)`.
 
-### Slash Commands
-- `/ping`: Check if bot is online
-- `/convo_history`: Show recent conversation history
-- `/toggle_responses`: Enable/disable random replies
-- `/bully`: Generate a chaotic insult using Groq
+### Function: `handle_conversation(message)`
 
-### Function: `handle_conversation()`
-- Updates conversation history
-- Retrieves similar messages from Pinecone
-- Builds a prompt using:
+#### Step-by-Step Logic
+1. **Extract IDs**:
+   - `user_id` and `channel_id` as strings.
+2. **Query Similar Messages**:
+   - Uses `query_similar_messages(message.content)`.
+3. **Chip Identity Check**:
+   - If message mentions "chip":
+     - Adds a note if the user is or isn’t the real Chip.
+     - Adjusts personality if the message is short and chip-focused.
+4. **Build Prompt**:
+   - Includes:
+     - Personality (placeholder)
+     - Writing style (placeholder)
+     - Chip status
+     - Server context from `query_server_info()`
+     - User history from `get_user_context(user_id)`
+     - Channel history from `get_channel_context(channel_id)`
+     - Similar messages from Pinecone
+     - Final user message and username
+5. **Generate Reply**:
+   - Sends prompt to `generate_reply()`
+   - Updates channel context with bot’s reply
+   - Sends reply in the channel
+
+### Memory Management
+- **Channel context** is updated in `on_message()` and used in `handle_conversation()`.
+- **User context** is used to personalize replies and track user-specific behavior.
+- **Memory cleanup** ensures the bot doesn’t retain stale or irrelevant data.
+
+---
+
+## Part 7: Server Context Module (`context.py`)
+
+### Purpose
+This module provides dynamic server-related context based on keywords found in user messages. It enriches the bot’s responses with relevant lore, history, and social dynamics of the Discord server.
+
+### Key Features
+- **Keyword-triggered context injection**:  
+  The bot scans user messages for specific tokens and returns relevant server information.
+- **Structured `server_info` dictionary**:
+  - `overview`: General background of the server
+  - `history`: Important events and incidents
+  - `lore`: Cultural and meme-based elements
+  - `admins_mods`: Info about moderators and admins
+  - `members`: Notable active members
+  - `banned`: Problematic or banned users
+
+### Function: `query_server_info(input_text)`
+
+#### Purpose
+To return relevant server context based on the content of a user’s message.
+
+#### Logic
+1. **Normalize Input**:
+   - Converts the input text to lowercase for case-insensitive matching.
+2. **Token Matching**:
+   - Checks for presence of keywords in the message.
+   - Keywords are grouped by category (e.g., history, lore, members).
+3. **Context Assembly**:
+   - If a keyword matches a category, the corresponding section from `server_info` is appended to the response.
+   - Multiple categories can be matched and combined.
+4. **Return**:
+   - A single string containing all matched context sections, stripped of extra whitespace.
+
+### Example Use Case in Bot Flow
+In `handle_conversation()` (from `bot.py`):
+- The bot calls `query_server_info(message.content)`
+- If relevant tokens are found, the returned context is added to the prompt
+- This helps the bot generate more informed, personalized, and lore-aware responses
+
+---
+
+## Part 8: Memory Management System (`history_maintain.py`)
+
+### Purpose
+This module manages **short-term memory** for both channels and users, enabling the bot to maintain context-aware conversations. It also includes a background cleanup system to remove stale data.
+
+### Key Enhancements
+- **Dual Context Tracking**:
+  - `channel_id` → for public conversation history
+  - `user_id` → for private or user-specific memory
+- **Persistent Storage**:
+  - Uses `TinyDB` to store:
+    - `conversations.json`: per-channel history
+    - `user_conversations.json`: per-user history
+    - `user_memory.json`: optional long-term memory (not yet used)
+- **Automatic Cleanup**:
+  - Removes inactive conversations after a timeout (default: 30 minutes)
+  - Runs asynchronously every 60 seconds
+
+### Functions
+
+#### `update_channel_context(channel_id, role, content, username=None, max_messages=20)`
+- **Purpose:** Update the conversation history for a specific channel.
+- **Logic:**
+  - Adds a new message entry with role, content, timestamp, and optional username.
+  - Maintains a rolling window of the last `max_messages` (default: 20).
+  - Updates or inserts the record in `db_convo`.
+
+#### `update_user_context(user_id, role, content, username=None, max_messages=20)`
+- **Purpose:** Update the conversation history for a specific user.
+- **Logic:**
+  - Same as `update_channel_context`, but stores data in `db_user_convo`.
+
+#### `get_channel_context(channel_id)`
+- **Purpose:** Retrieve the last messages from a specific channel.
+- **Returns:** A list of message dictionaries (or empty list if none found).
+
+#### `get_user_context(user_id)`
+- **Purpose:** Retrieve the last messages from a specific user.
+- **Returns:** A list of message dictionaries (or empty list if none found).
+
+#### `remove_old_contexts(timeout=1800)`
+- **Purpose:** Remove channel and user conversations that have been inactive for more than `timeout` seconds (default: 30 minutes).
+- **Logic:**
+  - Compares current time with `last_active` timestamp.
+  - Deletes expired records from both `db_convo` and `db_user_convo`.
+
+#### `cleanup_loop(interval=60, timeout=1800)`
+- **Purpose:** Run `remove_old_contexts()` every `interval` seconds (default: 60).
+- **Usage:** Called as a background task in `on_ready()` in `bot.py`.
+
+### Integration in Bot Workflow
+- **Channel context** is updated in `on_message()` and used in `handle_conversation()`.
+- **User context** is used to personalize replies and track user-specific behavior.
+- **Memory cleanup** ensures the bot doesn’t retain stale or irrelevant data.
+
+---
+
+## Part 9: Groq Integration Module (`groq_fetch.py`)
+
+### Purpose
+This module handles the interaction with the Groq API to generate AI-powered responses for the bot. It encapsulates the logic for sending prompts and receiving replies from the LLaMA-4 model.
+
+### Key Features
+- **Environment-based API key loading**:
+  - Uses `dotenv` to securely load the `GROQ_API_KEY`.
+- **Client Initialization**:
+  - Initializes a `Groq` client using the provided API key.
+- **Character Persona**:
+  - The system prompt defines the bot’s personality.”
+
+### Function: `generate_reply(prompt: str) -> str`
+
+#### Purpose
+To send a user-generated prompt to Groq and return a stylized, character-driven response.
+
+#### Logic
+1. **Prompt Construction**:
+   - Sends a two-part message:
+     - **System message**: Defines Wonder(e)-chan’s personality.
+     - **User message**: Contains the dynamically generated prompt.
+2. **Model Used**:
+   - `meta-llama/llama-4-scout-17b-16e-instruct`
+3. **Temperature**:
+   - Set to `0.7` for creative but coherent responses.
+4. **Error Handling**:
+   - If the API call fails, logs the error and returns a fallback message:
+     > “Oops — I couldn't think of a reply right now!”
+
+### Integration in Bot Workflow
+- Called in:
+  - `/bully` command
+  - `handle_conversation()` function
+- Receives a prompt built from:
   - Personality
-  - Recent history
-  - Similar messages
-- Sends prompt to Groq
-- Replies in the channel and updates memory
-
----
-
-## Part 6: Supporting Modules
-
-### groq_fetch.py
-- **Function: `generate_reply(prompt)`**
-  - Sends prompt to Groq
-  - Returns stylized reply as Wonder(e)-chan
-
-### history_maintain.py
-- **Function: `update_context(channel_id, role, content)`**
-  - Stores last 10 messages per channel in TinyDB
-- **Function: `get_context(channel_id)`**
-  - Retrieves conversation history
-- **Function: `cleanup_loop()`**
-  - Removes inactive conversations every 60 seconds
-
-### pinecone_fetch.py
-- **Function: `query_similar_messages(input_text)`**
-  - Embeds input
-  - Queries Pinecone for top 5 similar messages
-  - Returns their text
+  - Writing style
+  - Channel/user history
+  - Server context
+  - Semantic similarity
+- Returns a reply that is:
+  - In-character
+  - Emotionally expressive
+  - Contextually aware
 
 ---
 
@@ -179,199 +346,4 @@ Create a real-time interactive bot that responds to users using memory, semantic
 
 ---
 
----
-
-## Detailed Function Analysis
-
-### Part 1: Discord Bot — Message Collection
-
-#### `on_ready()`
-- **Purpose:** Initialize the bot and start collecting messages.
-- **Logic:**
-  - Connects to Discord and prints a login message.
-  - Opens the CSV file for writing.
-  - Iterates through all guilds the bot is part of.
-  - Filters guilds based on `target_guild_ids`.
-  - Iterates through text channels in each guild.
-  - Checks for `read_message_history` permission.
-  - Fetches messages in batches of 100 using pagination.
-  - Filters messages by `target_user_ids`.
-  - Cleans message content (removes newlines, unescapes HTML).
-  - Writes filtered messages to the CSV file.
-  - Prints summary statistics (total messages scanned, messages found).
-  - Closes the bot connection.
-
-#### `run_bot()`
-- **Purpose:** Run the bot with error handling.
-- **Logic:**
-  - Starts the bot and handles keyboard interrupts and unexpected errors.
-
----
-
-### Part 2: Pinecone — Embedding & Indexing
-
-#### `initialize_pinecone()`
-- **Purpose:** Initialize Pinecone client and check/create index.
-- **Logic:**
-  - Initializes Pinecone client.
-  - Checks if the index `"wondere"` exists.
-  - Creates the index if it doesn't exist with specified dimensions and metric.
-
-#### `load_and_clean_messages()`
-- **Purpose:** Load messages from CSV and clean them.
-- **Logic:**
-  - Loads messages from the CSV file.
-  - Drops NaNs and filters out empty or overly long messages.
-
-#### `embed_and_upsert_messages()`
-- **Purpose:** Embed messages and upsert them to Pinecone.
-- **Logic:**
-  - Batches messages into groups of 96.
-  - Generates embeddings using `llama-text-embed-v2`.
-  - Prepares vectors with metadata.
-  - Upserts vectors to Pinecone index.
-  - Adds rate limiting between batches.
-
----
-
-### Part 3: Groq — Writing Style Analysis
-
-#### `load_messages_from_csv()`
-- **Purpose:** Load messages from the CSV file.
-- **Logic:**
-  - Opens the CSV file and reads messages into a list.
-
-#### `chunk_list(lst, n)`
-- **Purpose:** Split the message list into chunks of size `n`.
-- **Logic:**
-  - Iterates over the list and yields successive n-sized chunks.
-
-#### `summarize_chunk(chunk_messages)`
-- **Purpose:** Send a prompt to Groq to analyze writing style.
-- **Logic:**
-  - Joins chunk messages into a single string.
-  - Constructs a prompt with the chunk messages.
-  - Sends the prompt to Groq and retrieves the summary.
-
-#### `aggregate_summaries(summaries)`
-- **Purpose:** Combine all chunk summaries into a final personality profile.
-- **Logic:**
-  - Joins all summaries into a single string.
-  - Constructs a prompt with the combined summaries.
-  - Sends the prompt to Groq and retrieves the final profile.
-
-#### `main(messages)`
-- **Purpose:** Orchestrate the entire process.
-- **Logic:**
-  - Splits messages into chunks.
-  - Summarizes each chunk.
-  - Aggregates all summaries into a final profile.
-
----
-
-### Part 4: Emoji Analysis
-
-#### `extract_emojis(text)`
-- **Purpose:** Extract emojis from a string using `emoji.EMOJI_DATA`.
-- **Logic:**
-  - Iterates over each character in the text.
-  - Checks if the character is an emoji.
-  - Returns a list of emojis found in the text.
-
-#### `main()`
-- **Purpose:** Extract and list all unique emojis used in the messages.
-- **Logic:**
-  - Loads messages from the CSV file.
-  - Extracts emojis from each message.
-  - Flattens and deduplicates the list.
-  - Outputs a sorted list of unique emojis.
-
----
-
-### Part 5: Interactive Discord Bot
-
-#### `on_ready()`
-- **Purpose:** Initialize the bot and sync slash commands.
-- **Logic:**
-  - Prints a login message.
-  - Adds slash commands to the bot.
-  - Syncs slash commands with Discord.
-  - Starts a background task to clean up old conversation history.
-
-#### `on_message()`
-- **Purpose:** Listen for messages and trigger responses.
-- **Logic:**
-  - Checks if the message author is the bot.
-  - Checks if the message is in active channels.
-  - Checks if the bot is mentioned directly.
-  - Checks for regex match for “wonder”.
-  - Checks for random chance to reply.
-  - Calls `handle_conversation()` if any condition is met.
-
-#### `handle_conversation(message)`
-- **Purpose:** Handle conversation and generate replies.
-- **Logic:**
-  - Updates conversation history.
-  - Retrieves similar messages from Pinecone.
-  - Builds a prompt with personality, recent history, and similar messages.
-  - Sends the prompt to Groq and retrieves the reply.
-  - Updates conversation history with the reply.
-  - Sends the reply in the channel.
-
----
-
-### Part 6: Supporting Modules
-
-#### `groq_fetch.py`
-
-##### `generate_reply(prompt)`
-- **Purpose:** Generate a reply using Groq’s LLaMA model.
-- **Logic:**
-  - Constructs a prompt with the user message.
-  - Sends the prompt to Groq and retrieves the reply.
-  - Returns the reply.
-
-#### `history_maintain.py`
-
-##### `update_context(channel_id, role, content)`
-- **Purpose:** Update conversation history in TinyDB.
-- **Logic:**
-  - Retrieves existing conversation history for the channel.
-  - Appends the new message to the history.
-  - Removes old messages if history exceeds 10 messages.
-  - Updates the conversation history in TinyDB.
-
-##### `get_context(channel_id)`
-- **Purpose:** Retrieve conversation history from TinyDB.
-- **Logic:**
-  - Retrieves conversation history for the channel from TinyDB.
-  - Returns the history.
-
-##### `cleanup_loop()`
-- **Purpose:** Periodically remove inactive conversations.
-- **Logic:**
-  - Removes conversations with inactivity greater than 5 minutes.
-  - Runs every 60 seconds.
-
-#### `pinecone_fetch.py`
-
-##### `query_similar_messages(input_text)`
-- **Purpose:** Retrieve semantically similar messages from Pinecone.
-- **Logic:**
-  - Embeds the input text using `llama-text-embed-v2`.
-  - Queries Pinecone for top 5 similar messages.
-  - Returns the text of similar messages.
-
----
-
-## System Flow Summary
-
-1. **Collect** messages → `user_messages.csv`
-2. **Embed** messages → Pinecone
-3. **Analyze** style → Groq
-4. **Extract** emojis → Emoji list
-5. **Respond** in real-time → Interactive bot
-6. **Support** with memory, similarity, and reply generation
-
----
 
