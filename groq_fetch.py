@@ -12,7 +12,7 @@ client = Groq(api_key=api_key)
 async def generate_reply(prompt: str) -> str:
     try:
         response = client.chat.completions.create(
-            model="meta-llama/llama-4-maverick-17b-128e-instruct",
+            model="compound-beta",
             messages=[
                 {"role": "system", "content": "You are Wonder(e)-chan, a meme-loving, witty, tsundere-yandere girl. Your replies are playful, intense, obsessive over Chip, and sometimes darkly humorous."},
                 {"role": "user", "content": prompt}
